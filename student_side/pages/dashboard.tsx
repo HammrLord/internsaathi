@@ -31,6 +31,28 @@ export default function Dashboard() {
         }
         setEmail(storedEmail);
         fetchData(storedEmail);
+
+        // Feature 8: Real-time Listener
+        const socket = io('http://localhost:4000/student');
+
+        socket.on('connect', () => {
+            console.log('Connected to real-time updates');
+        });
+
+        socket.on('job:created', (data: any) => {
+            console.log('New job posted!', data);
+            setNewMsg(`New internship posted: ${data.title}`);
+            setShowNotification(true);
+            // Refresh data
+            fetchData(storedEmail);
+
+            // Hide notification after 5s
+            setTimeout(() => setShowNotification(false), 5000);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const fetchData = async (userEmail: string) => {
@@ -185,8 +207,22 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Extended Header with Filters */}
+                {/* Header (Now just Search Bar) */}
                 <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-8 py-4">
+
+                    {/* Real-time Notification Toast */}
+                    {showNotification && (
+                        <div className="absolute top-20 right-8 z-50 bg-black text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-in slide-in-from-right duration-300">
+                            <div className="bg-primary rounded-full p-1">
+                                <Bell size={14} className="text-white" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold">Update</p>
+                                <p className="text-xs text-gray-300">{newMsg}</p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
 
                         {/* Filters */}

@@ -8,6 +8,7 @@ import { useJobs } from '@/context/JobsContext';
 import LocationInput from '@/components/LocationInput';
 import DurationInput from '@/components/DurationInput';
 import JobTitleInput from '@/components/JobTitleInput';
+import { io } from 'socket.io-client';
 
 export default function NewJobPage() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function NewJobPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
@@ -62,7 +63,18 @@ export default function NewJobPage() {
       return;
     }
 
-    addJob(formData);
+    await addJob(formData);
+
+    // Feature 8: Real-time update
+    try {
+      const socket = io('http://localhost:4000/recruiter');
+      socket.emit('job:created', formData);
+      // Give it a moment to send before disconnecting/navigating (optional but safer)
+      setTimeout(() => socket.disconnect(), 1000);
+    } catch (err) {
+      console.error("Socket emit failed", err);
+    }
+
     router.push('/jobs');
   };
 
