@@ -1,0 +1,20 @@
+{
+    "name": "@pm/database",
+    "version": "1.0.0",
+    "description": "Shared database layer for PM Internship Platform",
+    "main": "src/index.js",
+    "type": "module",
+    "keywords": [
+        "database",
+        "postgres",
+        "pm-internship"
+    ],
+    "exports": {
+        ".": "./src/index.js",
+        "./queries/jobs": "./src/queries/jobs.js",
+        "./queries/candidates": "./src/queries/candidates.js"
+    },
+    "dependencies": {
+        "pg": "^8.11.3"
+    }
+}

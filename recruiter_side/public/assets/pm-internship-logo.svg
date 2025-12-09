@@ -1,0 +1,9 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PM Internship Scheme Logo Placeholder">
+  <rect width="200" height="60" fill="#F6F7F9"/>
+  <circle cx="30" cy="30" r="20" fill="#FF9933"/>
+  <circle cx="30" cy="30" r="15" fill="#FFFFFF"/>
+  <circle cx="30" cy="30" r="10" fill="#138808"/>
+  <circle cx="30" cy="30" r="4" fill="#054A91"/>
+  <text x="60" y="25" font-family="Arial" font-weight="bold" font-size="16" fill="#0b1220">PM Internship</text>
+  <text x="60" y="45" font-family="Arial" font-size="12" fill="#566170">Scheme</text>
+</svg>

@@ -1,0 +1,12 @@
+{
+    "name": "@pm/shared",
+    "version": "1.0.0",
+    "description": "Shared utilities and constants for PM Internship Platform",
+    "main": "src/index.js",
+    "type": "module",
+    "exports": {
+        ".": "./src/index.js",
+        "./constants": "./src/constants.js",
+        "./utils": "./src/utils.js"
+    }
+}

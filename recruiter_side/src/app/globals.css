@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-orange-600 focus:ring-primary;
+  }
+
+  .btn-outline {
+    @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-200;
+  }
+
+  .btn-link {
+    @apply text-primary hover:text-orange-700 underline-offset-4 hover:underline p-0 bg-transparent border-none;
+  }
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Custom UI Tokens */
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --surface: #ffffff;
+  --surface-hover: #f3f4f6;
+  --border: #e5e7eb;
+  --card: #ffffff;
+
+  /* Brand Colors */
+  --primary: #FF9933;
+  --secondary: #138808;
+  --chakra: #054A91;
+
+  /* Status Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+
+  --radius: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+
+    /* Custom UI Tokens Dark Mode */
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --surface: #1f2937;
+    --surface-hover: #374151;
+    --border: #374151;
+    --card: #111827;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}

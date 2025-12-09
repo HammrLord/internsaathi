@@ -1,0 +1,44 @@
+{
+  "name": "pm-internship-platform",
+  "version": "1.0.0",
+  "description": "PM Internship Scheme - AI-Powered Recruitment Platform",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "recruiter_side",
+    "student_side"
+  ],
+  "scripts": {
+    "dev": "concurrently -n socket,recruiter,student -c blue,green,yellow \"npm run dev:socket\" \"npm run dev:recruiter\" \"npm run dev:student\"",
+    "dev:socket": "node server.js",
+    "dev:recruiter": "npm run dev -w recruiter_side",
+    "dev:student": "npm run dev -w student_side",
+    "build": "npm run build --workspaces",
+    "start": "npm run start --workspaces",
+    "db:migrate": "node scripts/run_migration.js",
+    "db:seed": "node scripts/seed_candidates.js"
+  },
+  "dependencies": {
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pm-internship/platform.git"
+  },
+  "keywords": [
+    "internship",
+    "recruitment",
+    "ai",
+    "government",
+    "india"
+  ],
+  "author": "PM Internship Team",
+  "license": "ISC"
+}

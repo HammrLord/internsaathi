@@ -1,0 +1,54 @@
+{
+    "aadhar": {
+        "123412341234": {
+            "status": "verified",
+            "issuing_state": "Delhi",
+            "last_verified": "2024-08-14",
+            "fraud_reports": 0
+        },
+        "567856785678": {
+            "status": "verified",
+            "issuing_state": "Gujarat",
+            "last_verified": "2023-12-02",
+            "fraud_reports": 1
+        },
+        "890189018901": {
+            "status": "watchlist",
+            "issuing_state": "Maharashtra",
+            "last_verified": "2022-11-19",
+            "fraud_reports": 3
+        },
+        "432143214321": {
+            "status": "verified",
+            "issuing_state": "Gujarat",
+            "last_verified": "2024-01-10",
+            "fraud_reports": 0
+        }
+    },
+    "education_certificate": {
+        "EDU123456": {
+            "status": "verified",
+            "institution": "IIT Delhi",
+            "year": 2023,
+            "holder_name": "Rahul Sharma"
+        },
+        "EDU987654": {
+            "status": "verified",
+            "institution": "NID Ahmedabad",
+            "year": 2022,
+            "holder_name": "Priya Patel"
+        },
+        "EDU112233": {
+            "status": "verified",
+            "institution": "Delhi University",
+            "year": 2023,
+            "holder_name": "Amit Kumar"
+        },
+        "EDU445566": {
+            "status": "flagged",
+            "institution": "Fake University",
+            "year": 2021,
+            "holder_name": "Sneha Gupta"
+        }
+    }
+}

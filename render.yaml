@@ -1,0 +1,96 @@
+databases:
+  - name: recruit-db
+    databaseName: pm_recruit
+    user: recruiter_user
+    plan: free
+
+services:
+  - type: web
+    name: recruiter-portal
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node run_migration.js && node seed_admin.js && NEXTAUTH_URL=$RENDER_EXTERNAL_URL npm start
+    envVars:
+      - key: DB_USER
+        fromDatabase:
+          name: recruit-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: recruit-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: recruit-db
+          property: database
+      - key: DB_HOST
+        fromDatabase:
+          name: recruit-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: recruit-db
+          property: port
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+
+  - type: web
+    name: student-portal
+    env: node
+    plan: free
+    rootDir: student-portal
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DB_USER
+        fromDatabase:
+          name: recruit-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: recruit-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: recruit-db
+          property: database
+      - key: DB_HOST
+        fromDatabase:
+          name: recruit-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: recruit-db
+          property: port
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+
+  - type: web
+    name: authenticity-backend
+    env: python
+    plan: free
+    rootDir: SIH_Authenticity_Guard/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    
+  - type: web
+    name: authenticity-frontend
+    env: static
+    plan: free
+    rootDir: SIH_Authenticity_Guard/frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: SIH_Authenticity_Guard/frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://authenticity-backend.onrender.com
