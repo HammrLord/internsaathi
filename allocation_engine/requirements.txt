@@ -1,0 +1,31 @@
+# Core Data Processing
+pandas>=2.0.0
+numpy<2.0.0  # Use NumPy 1.x for compatibility
+
+# Knowledge Graph
+networkx>=3.0
+
+# GNN Framework
+torch>=2.0.0
+torch-geometric>=2.3.0
+
+# Genetic Algorithm
+deap>=1.4.0
+
+# NLP for Feature Extraction
+spacy>=3.5.0
+nltk>=3.8
+
+# Visualization
+matplotlib>=3.7.0
+plotly>=5.14.0
+pyvis>=0.3.2
+
+# Utilities
+scikit-learn>=1.3.0
+tqdm>=4.65.0
+pyyaml>=6.0
+
+# Web Dashboard
+streamlit>=1.28.0
+streamlit-agraph>=0.0.45

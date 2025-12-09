@@ -42,9 +42,11 @@ export async function POST(request) {
             }, { status: 400 });
         }
 
-        // 1. Check User Existence
-        const existing = await query('SELECT * FROM users WHERE email = $1', [email]);
-        if (existing.rows.length > 0) {
+        // 1. Check User Existence (in users OR candidates to be safe)
+        const existingUser = await query('SELECT email FROM users WHERE email = $1', [email]);
+        const existingCandidate = await query('SELECT email FROM candidates WHERE email = $1', [email]);
+
+        if (existingUser.rows.length > 0 || existingCandidate.rows.length > 0) {
             return NextResponse.json({ error: 'User already exists' }, { status: 400 });
         }
 
