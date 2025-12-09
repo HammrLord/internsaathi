@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import bcrypt from 'bcrypt';
+import { checkContent } from '@/lib/gemini';
+const disposableDomains = require('disposable-email-domains');
 
 // Handle OPTIONS for CORS explicitly if needed (though next.config.mjs should handle it)
 export async function OPTIONS() {
@@ -15,6 +17,29 @@ export async function POST(request) {
         // Basic Validation
         if (!email || !password || !name) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        // Feature 6: Data Validation (Name)
+        if (!/^[a-zA-Z\s'-]*$/.test(name)) {
+            return NextResponse.json({
+                error: 'Name cannot contain digits or special characters.'
+            }, { status: 400 });
+        }
+
+        // Feature 3: Block Disposable Emails
+        const domain = email.split('@')[1];
+        if (disposableDomains.includes(domain)) {
+            return NextResponse.json({
+                error: 'Disposable email addresses are not allowed. Please use a permanent email address.'
+            }, { status: 400 });
+        }
+
+        // Feature 4: Content Moderation
+        const isSafe = await checkContent(name);
+        if (!isSafe) {
+            return NextResponse.json({
+                error: 'The provided name contains inappropriate content. Please choose another name.'
+            }, { status: 400 });
         }
 
         // 1. Check User Existence

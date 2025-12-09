@@ -12,7 +12,8 @@ export const authOptions = {
             name: "Credentials",
             credentials: {
                 email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" }
+                password: { label: "Password", type: "password" },
+                recaptchaToken: { label: "Recaptcha Token", type: "text" }
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) return null;
@@ -21,11 +22,41 @@ export const authOptions = {
                     const result = await query('SELECT * FROM users WHERE email = $1', [credentials.email]);
                     const user = result.rows[0];
 
-                    if (!user) return null;
-                    if (!user.password) return null; // Ensure user has a password set
+                    if (!user) return null; // Or throw specific error like "UserNotFound"
+
+                    // Check failed attempts
+                    if (user.failed_login_attempts >= 3) {
+                        if (!credentials.recaptchaToken) {
+                            throw new Error('RECAPTCHA_REQUIRED');
+                        }
+
+                        // Verify Recaptcha
+                        const secretKey = process.env.RECAPTCHA_SECRET_KEY; // Placeholder or env
+                        if (secretKey) { // Only verify if key is present (dev mode safety)
+                            const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${credentials.recaptchaToken}`;
+                            const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
+                            const recaptchaData = await recaptchaRes.json();
+
+                            if (!recaptchaData.success) {
+                                throw new Error('RECAPTCHA_INVALID');
+                            }
+                        }
+                    }
+
+                    if (!user.password) return null;
 
                     const match = await bcrypt.compare(credentials.password, user.password);
-                    if (!match) return null;
+
+                    if (!match) {
+                        // Increment failed attempts
+                        await query('UPDATE users SET failed_login_attempts = COALESCE(failed_login_attempts, 0) + 1, last_failed_login = NOW() WHERE email = $1', [credentials.email]);
+                        throw new Error('INVALID_CREDENTIALS');
+                    }
+
+                    // Reset failed attempts on success
+                    if (user.failed_login_attempts > 0) {
+                        await query('UPDATE users SET failed_login_attempts = 0, last_failed_login = NULL WHERE email = $1', [credentials.email]);
+                    }
 
                     return {
                         id: user.id,
@@ -37,7 +68,7 @@ export const authOptions = {
                     };
                 } catch (e) {
                     console.error("Auth Error:", e);
-                    return null;
+                    throw e; // Rethrow to let NextAuth handle it or pass message
                 }
             }
         }),

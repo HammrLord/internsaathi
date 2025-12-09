@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { User, Briefcase, GraduationCap, MapPin, Save, Plus, Trash2, ArrowLeft, Globe, Github, Linkedin, FileText, Phone, Calendar, Upload, File } from 'lucide-react';
 import { useRouter } from 'next/router';
+import LocationInput from '../components/LocationInput';
+import JobTitleInput from '../components/JobTitleInput';
+import DurationInput from '../components/DurationInput';
 
 export default function Profile() {
     const router = useRouter();
@@ -184,9 +187,11 @@ export default function Profile() {
                             <div className="form-group">
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Location / Address</label>
                                 <div className="relative">
-                                    <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                    <input type="text" className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/50 outline-none"
-                                        value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="City, State" />
+                                    <LocationInput
+                                        value={formData.address}
+                                        onChange={(val: string) => setFormData({ ...formData, address: val })}
+                                        placeholder="Search City..."
+                                    />
                                 </div>
                             </div>
                             <div className="form-group">
@@ -296,11 +301,21 @@ export default function Profile() {
                                 <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative group">
                                     <button onClick={() => removeExp(i)} className="absolute top-3 right-3 text-gray-400 hover:text-red-500 p-1"><Trash2 size={16} /></button>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                                        <input className="bg-white p-2.5 rounded border border-gray-200 text-sm font-bold" placeholder="Role / Job Title" value={exp.role} onChange={(e) => updateExp(i, 'role', e.target.value)} />
+                                        <div>
+                                            <JobTitleInput
+                                                value={exp.role}
+                                                onChange={(val: string) => updateExp(i, 'role', val)}
+                                                placeholder="Role (e.g. React Intern)"
+                                            />
+                                        </div>
                                         <input className="bg-white p-2.5 rounded border border-gray-200 text-sm" placeholder="Company Name" value={exp.company} onChange={(e) => updateExp(i, 'company', e.target.value)} />
                                     </div>
                                     <div className="mb-2">
-                                        <input className="w-full bg-white p-2.5 rounded border border-gray-200 text-sm" placeholder="Duration (e.g. June 2023 - Aug 2023)" value={exp.duration} onChange={(e) => updateExp(i, 'duration', e.target.value)} />
+                                        <DurationInput
+                                            value={exp.duration}
+                                            onChange={(val: string) => updateExp(i, 'duration', val)}
+                                            required={false}
+                                        />
                                     </div>
                                     <textarea className="w-full bg-white p-2.5 rounded border border-gray-200 text-sm" rows={2} placeholder="Description of responsibilities..." value={exp.desc} onChange={(e) => updateExp(i, 'desc', e.target.value)} />
                                 </div>

@@ -10,18 +10,45 @@ export default function Learn() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
 
+    const [userSkills, setUserSkills] = useState<string[]>([]);
+
     useEffect(() => {
-        fetch('/api/courses/nptel')
-            .then(res => res.json())
-            .then(data => {
-                setCourses(data.courses || []);
-                setFilteredCourses(data.courses || []);
-                setLoading(false);
-            })
-            .catch(err => {
+        const loadPersonalizedCourses = async () => {
+            try {
+                // 1. Get user email from local storage
+                const email = localStorage.getItem('student_email');
+                let skills = '';
+
+                if (email) {
+                    const profileRes = await fetch(`/api/student/profile?email=${email}`);
+                    const profileData = await profileRes.json();
+
+                    if (profileData.profile && profileData.profile.skills) {
+                        // Extract skills string (assuming it's comma separated or JSON)
+                        // The legacy profile query returns distinct skills string or array
+                        skills = profileData.profile.skills;
+
+                        // Clean up skills for UI if needed
+                        if (skills) {
+                            setUserSkills(skills.split(',').map((s: string) => s.trim()));
+                        }
+                    }
+                }
+
+                // 2. Fetch courses with skills
+                const coursesRes = await fetch(`/api/courses/nptel?skills=${encodeURIComponent(skills)}`);
+                const coursesData = await coursesRes.json();
+
+                setCourses(coursesData.courses || []);
+                setFilteredCourses(coursesData.courses || []);
+            } catch (err) {
                 console.error("Failed to load courses", err);
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        loadPersonalizedCourses();
     }, []);
 
     useEffect(() => {

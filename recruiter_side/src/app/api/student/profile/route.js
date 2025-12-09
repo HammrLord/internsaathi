@@ -27,7 +27,7 @@ export async function GET(request) {
         } else {
             // Fallback to minimal data from candidates/users for legacy
             const legacyRes = await query(
-                `SELECT u.name as full_name, u.email, c.skills, c.summary as projects, c.education_level 
+                `SELECT u.name as full_name, u.email, c.skills, c.summary as projects, c.education 
                  FROM users u
                  LEFT JOIN candidates c ON u.email = c.email
                  WHERE u.email = $1

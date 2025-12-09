@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 
+import AuthSwitchModal from '@/components/AuthSwitchModal';
+
 export default function SignupPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
@@ -14,6 +16,7 @@ export default function SignupPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
     // Password Criteria
     const criteria = [
@@ -25,6 +28,26 @@ export default function SignupPage() {
 
     const isPasswordValid = criteria.every(c => c.valid);
     const doPasswordsMatch = password === confirmPassword && password !== '';
+
+    const checkEmail = async () => {
+        if (!email || !email.includes('@')) return;
+
+        try {
+            const res = await fetch('/api/auth/check-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+
+            // If on Signup page and user DOES exist -> Prompt to Login
+            if (data.exists) {
+                setShowAuthModal(true);
+            }
+        } catch (error) {
+            console.error('Email check failed:', error);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -47,7 +70,7 @@ export default function SignupPage() {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ name, email, password }),
             });
 
             if (!res.ok) {
@@ -70,6 +93,12 @@ export default function SignupPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+            <AuthSwitchModal
+                isOpen={showAuthModal}
+                type="signup"
+                email={email}
+                onClose={() => setShowAuthModal(false)}
+            />
             <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="text-center">
                     <div className="mx-auto h-16 w-16 relative mb-4">
@@ -88,6 +117,24 @@ export default function SignupPage() {
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-4">
                         <div>
+                            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
+                            <input
+                                id="name"
+                                name="name"
+                                type="text"
+                                required
+                                value={name}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^[a-zA-Z\s'-]*$/.test(val)) {
+                                        setName(val);
+                                    }
+                                }}
+                                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all"
+                                placeholder="John Doe"
+                            />
+                        </div>
+                        <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
                             <input
                                 id="email"
@@ -96,6 +143,7 @@ export default function SignupPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                onBlur={checkEmail}
                                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all"
                                 placeholder="you@example.com"
                             />

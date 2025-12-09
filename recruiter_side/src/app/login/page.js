@@ -6,12 +6,39 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
+import AuthSwitchModal from '@/components/AuthSwitchModal';
+
+import ReCAPTCHA from 'react-google-recaptcha';
+
 export default function LoginPage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [recaptchaToken, setRecaptchaToken] = useState(null);
+    const [showRecaptcha, setShowRecaptcha] = useState(false);
+
+    const checkEmail = async () => {
+        if (!email || !email.includes('@')) return;
+
+        try {
+            const res = await fetch('/api/auth/check-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+
+            // If on Login page and user DOES NOT exist -> Prompt to Signup
+            if (!data.exists) {
+                setShowAuthModal(true);
+            }
+        } catch (error) {
+            console.error('Email check failed:', error);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -21,12 +48,21 @@ export default function LoginPage() {
         const res = await signIn('credentials', {
             email,
             password,
+            recaptchaToken, // Send token if available
             redirect: false,
         });
 
         if (res?.error) {
-            setError('Invalid email or password');
+            if (res.error.includes('RECAPTCHA_REQUIRED')) {
+                setShowRecaptcha(true);
+                setError('Too many failed attempts. Please verify you are human.');
+            } else if (res.error.includes('RECAPTCHA_INVALID')) {
+                setError('Recaptcha validation failed. Please try again.');
+            } else {
+                setError('Invalid email or password');
+            }
             setIsLoading(false);
+            if (recaptchaToken) setRecaptchaToken(null); // Reset token on error
         } else {
             router.push('/dashboard');
         }
@@ -34,6 +70,12 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex bg-white font-sans">
+            <AuthSwitchModal
+                isOpen={showAuthModal}
+                type="login"
+                email={email}
+                onClose={() => setShowAuthModal(false)}
+            />
             {/* Left Column - Official Banner */}
             <div className="hidden lg:flex w-1/2 bg-gray-50 items-center justify-center p-12 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-100 to-orange-50 opacity-50" />
@@ -100,6 +142,7 @@ export default function LoginPage() {
                                         required
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
+                                        onBlur={checkEmail}
                                         className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm transition-all"
                                         placeholder="you@example.com"
                                     />
@@ -117,6 +160,15 @@ export default function LoginPage() {
                                         placeholder="••••••••"
                                     />
                                 </div>
+
+                                {showRecaptcha && (
+                                    <div className="flex justify-center">
+                                        <ReCAPTCHA
+                                            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"} // Placeholder
+                                            onChange={(token) => setRecaptchaToken(token)}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {error && (
@@ -127,7 +179,7 @@ export default function LoginPage() {
 
                             <button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isLoading || (showRecaptcha && !recaptchaToken)}
                                 className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 shadow-md transition-all hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
                             >
                                 {isLoading && <Loader2 size={18} className="animate-spin mr-2" />}

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { Loader2, Mail, Lock } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2, Mail, Lock, AlertTriangle } from 'lucide-react';
 import Head from 'next/head';
+import Link from 'next/link';
+import AuthSwitchModal from '../components/AuthSwitchModal';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 export default function Login() {
     const router = useRouter();
@@ -12,30 +14,81 @@ export default function Login() {
         password: ''
     });
     const [error, setError] = useState('');
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+    const [showRecaptcha, setShowRecaptcha] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const checkEmail = async () => {
+        if (!formData.email || !formData.email.includes('@')) return;
+
+        try {
+            // Use the proxy route to hit recruiter_side API
+            const res = await fetch('/api/auth/check-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: formData.email }),
+            });
+            const data = await res.json();
+
+            // If on Login page and user DOES NOT exist -> Prompt to Signup
+            if (!data.exists) {
+                setShowAuthModal(true);
+            }
+        } catch (error) {
+            console.error('Email check failed:', error);
+        }
+    };
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
         setError('');
+        setIsLoading(true);
 
         try {
             const res = await fetch('/api/student/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                    recaptchaToken // Send token if available
+                })
             });
 
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || 'Login failed');
+                if (data.error === 'RECAPTCHA_REQUIRED') {
+                    setShowRecaptcha(true);
+                    setError('Too many failed attempts. Please verify you are human.');
+                    return;
+                } else if (data.error === 'RECAPTCHA_INVALID') {
+                    setError('Recaptcha validation failed. Please try again.');
+                    return;
+                }
+                setError(data.error || 'Login failed');
+                return;
             }
 
+            // Enhanced Debug logging
+            console.log('Login successful:', data);
+
+            // Store user info and token if present
             localStorage.setItem('student_email', formData.email);
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+            if (data.user) {
+                localStorage.setItem('user', JSON.stringify(data.user));
+            }
+
+            // Redirect
             router.push('/dashboard');
 
         } catch (err: any) {
+            console.error('Login error:', err);
             setError(err.message);
+            if (recaptchaToken) setRecaptchaToken(null); // Reset token on error
         } finally {
             setIsLoading(false);
         }
@@ -43,6 +96,12 @@ export default function Login() {
 
     return (
         <div className="min-h-screen flex items-center justify-center relative bg-gray-50 overflow-hidden font-sans">
+            <AuthSwitchModal
+                isOpen={showAuthModal}
+                type="login"
+                email={formData.email}
+                onClose={() => setShowAuthModal(false)}
+            />
             <Head>
                 <title>Student Login | PM Internship Scheme</title>
             </Head>
@@ -54,7 +113,7 @@ export default function Login() {
             </div>
 
             {/* Centered Card */}
-            <div className="relative z-10 w-full max-w-md p-4">
+            <div className="relative z-10 w-full max-w-sm p-4">
                 <div className="bg-white/80 backdrop-blur-2xl border border-white/50 shadow-2xl rounded-2xl p-8 relative overflow-hidden">
 
                     {/* Decorative Header Gradient */}
@@ -68,11 +127,11 @@ export default function Login() {
                             Welcome Back
                         </h2>
                         <p className="mt-2 text-sm text-gray-500 text-center">
-                            Sign in to access your student dashboard
+                            Sign in to access your dashboard
                         </p>
                     </div>
 
-                    <form className="space-y-6" onSubmit={handleSubmit}>
+                    <form className="space-y-6" onSubmit={handleLogin}>
                         {/* Email */}
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
@@ -87,6 +146,7 @@ export default function Login() {
                                     placeholder="rahul@example.com"
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    onBlur={checkEmail}
                                 />
                             </div>
                         </div>
@@ -109,9 +169,18 @@ export default function Login() {
                             </div>
                         </div>
 
+                        {showRecaptcha && (
+                            <div className="flex justify-center my-4 scale-90 origin-center">
+                                <ReCAPTCHA
+                                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"} // Placeholder
+                                    onChange={(token: string | null) => setRecaptchaToken(token)}
+                                />
+                            </div>
+                        )}
+
                         {error && (
-                            <div className="rounded-xl bg-red-50 p-4 border border-red-100 flex items-start gap-3">
-                                <div className="flex-shrink-0 w-1 h-full bg-red-400 rounded-full" />
+                            <div className="rounded-xl bg-red-50 p-4 border border-red-100 flex items-start gap-3 animate-pulse">
+                                <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
                                 <div>
                                     <h3 className="text-sm font-bold text-red-800">Login Failed</h3>
                                     <div className="text-xs text-red-600 mt-0.5">{error}</div>
@@ -122,7 +191,7 @@ export default function Login() {
                         <div>
                             <button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isLoading || (showRecaptcha && !recaptchaToken)}
                                 className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-orange-500/30 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 transition-all transform hover:-translate-y-0.5 active:scale-95"
                             >
                                 {isLoading && <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />}
@@ -133,9 +202,9 @@ export default function Login() {
 
                     <div className="mt-8 pt-6 border-t border-gray-100/50 text-center">
                         <p className="text-sm text-gray-500">
-                            New to the platform?{' '}
+                            Don't have an account?{' '}
                             <Link href="/signup" className="font-bold text-primary hover:text-orange-700 hover:underline transition-colors">
-                                Create a Student Account
+                                Create one here
                             </Link>
                         </p>
                     </div>

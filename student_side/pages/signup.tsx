@@ -4,6 +4,8 @@ import { Loader2, User, Mail, Lock, Briefcase, Code } from 'lucide-react';
 import Head from 'next/head';
 import Link from 'next/link';
 
+import AuthSwitchModal from '../components/AuthSwitchModal';
+
 export default function Signup() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
@@ -14,6 +16,7 @@ export default function Signup() {
     });
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
     // Password Criteria
     const criteria = [
@@ -26,10 +29,31 @@ export default function Signup() {
     const isPasswordValid = criteria.every(c => c.valid);
     const doPasswordsMatch = formData.password === confirmPassword && formData.password !== '';
 
+    const checkEmail = async () => {
+        if (!formData.email || !formData.email.includes('@')) return;
+
+        try {
+            // Use the proxy route to hit recruiter_side API
+            const res = await fetch('/api/auth/check-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: formData.email }),
+            });
+            const data = await res.json();
+
+            // If on Signup page and user DOES exist -> Prompt to Login
+            if (data.exists) {
+                setShowAuthModal(true);
+            }
+        } catch (error) {
+            console.error('Email check failed:', error);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-
+        // ... (rest of validation) ...
         if (!isPasswordValid) {
             setError('Please meet all password requirements.');
             return;
@@ -71,6 +95,13 @@ export default function Signup() {
 
     return (
         <div className="min-h-screen flex items-center justify-center relative bg-gray-50 overflow-hidden font-sans">
+            <AuthSwitchModal
+                isOpen={showAuthModal}
+                type="signup"
+                email={formData.email}
+                onClose={() => setShowAuthModal(false)}
+            />
+            {/* ... rest of the component ... */}
             <Head>
                 <title>Student Signup | PM Internship Scheme</title>
             </Head>
@@ -114,7 +145,12 @@ export default function Signup() {
                                     className="block w-full pl-10 px-4 py-3 bg-white/50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
                                     placeholder="Rahul Kumar"
                                     value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (/^[a-zA-Z\s'-]*$/.test(val)) {
+                                            setFormData({ ...formData, name: val });
+                                        }
+                                    }}
                                 />
                             </div>
                         </div>
@@ -133,6 +169,7 @@ export default function Signup() {
                                     placeholder="rahul@example.com"
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    onBlur={checkEmail}
                                 />
                             </div>
                         </div>

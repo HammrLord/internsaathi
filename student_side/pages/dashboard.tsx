@@ -14,6 +14,11 @@ export default function Dashboard() {
     const [error, setError] = useState('');
     const [email, setEmail] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState({
+        location: '',
+        duration: '',
+        role: ''
+    });
 
     const [showNotification, setShowNotification] = useState(false);
     const [newMsg, setNewMsg] = useState("");
@@ -58,11 +63,20 @@ export default function Dashboard() {
         router.push('/login');
     };
 
-    const filteredJobs = jobs.filter(job =>
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (job.company && job.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        job.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filter Logic
+    const filteredJobs = jobs.filter(job => {
+        const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (job.company && job.company.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            job.location.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesLocation = filters.location ? job.location.toLowerCase().includes(filters.location.toLowerCase()) : true;
+        const matchesDuration = filters.duration ? (job.duration && job.duration.toLowerCase().includes(filters.duration.toLowerCase())) : true;
+
+        // Simple role check (if title contains role keyword)
+        const matchesRole = filters.role ? job.title.toLowerCase().includes(filters.role.toLowerCase()) : true;
+
+        return matchesSearch && matchesLocation && matchesDuration && matchesRole;
+    });
 
     return (
         <div className="flex h-screen overflow-hidden bg-gray-50 font-sans text-gray-900">
@@ -171,9 +185,49 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Header (Now just Search Bar) */}
-                <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-8 py-4 flex items-center justify-end">
-                    <div className="flex items-center gap-4">
+                {/* Extended Header with Filters */}
+                <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-8 py-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+                        {/* Filters */}
+                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                            <select
+                                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                value={filters.location}
+                                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+                            >
+                                <option value="">All Locations</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Hyderabad">Hyderabad</option>
+                                <option value="Pune">Pune</option>
+                                <option value="Remote">Remote</option>
+                            </select>
+
+                            <select
+                                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                value={filters.duration}
+                                onChange={(e) => setFilters({ ...filters, duration: e.target.value })}
+                            >
+                                <option value="">Any Duration</option>
+                                <option value="3 Months">3 Months</option>
+                                <option value="6 Months">6 Months</option>
+                            </select>
+
+                            <select
+                                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                value={filters.role}
+                                onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+                            >
+                                <option value="">All Roles</option>
+                                <option value="React">React</option>
+                                <option value="Python">Python</option>
+                                <option value="Design">Design</option>
+                                <option value="Marketing">Marketing</option>
+                            </select>
+                        </div>
+
                         {/* Search Bar */}
                         <div className="relative">
                             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
